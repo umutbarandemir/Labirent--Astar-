@@ -155,4 +155,19 @@ body.dark #themeToggleBtn {
   margin-top: 10px;
 }
 
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-weight: 600;
+}
 
+.speed-control input[type="range"] {
+  width: 120px;
+  cursor: pointer;
+}
+
+.speed-control label {
+  color: var(--text-color);
+}

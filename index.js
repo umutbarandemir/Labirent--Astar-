@@ -7,6 +7,8 @@ const clearSolutionBtn = document.getElementById("clearSolutionBtn");
 const clearBtn = document.getElementById("clearBtn");
 const infoEl = document.getElementById("info");
 const themeToggleBtn = document.getElementById("themeToggleBtn");
+const speedSlider = document.getElementById("speedSlider");
+const speedValue = document.getElementById("speedValue");
 
 const ROWS = 20, COLS = 20;
 
@@ -18,6 +20,13 @@ let pathFound = false;
 let interval = null;
 
 let isMouseDown = false; // for wall drawing
+
+let speedMultiplier = 1; // default speed
+
+speedSlider.addEventListener("input", () => {
+  speedMultiplier = parseInt(speedSlider.value);
+  speedValue.textContent = `${speedMultiplier}x`;
+});
 
 // grid oluştur
 for (let r = 0; r < ROWS; r++) {
@@ -214,7 +223,7 @@ function animateAStar(start, end) {
         if (!openSet.includes(neighbor)) openSet.push(neighbor);
       }
     }
-  }, 30);
+  }, 30/speedMultiplier);
 }
 
 function drawPathAnimated(path, visitedCount) {
@@ -229,5 +238,5 @@ function drawPathAnimated(path, visitedCount) {
     const n = path[i];
     if (n !== startNode && n !== endNode) n.cell.classList.add("path");
     i++;
-  }, 40);
+  }, 40/speedMultiplier);
 }
