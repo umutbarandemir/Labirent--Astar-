@@ -1,0 +1,106 @@
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background-color: #f5f5f5;
+}
+
+h1 {
+  margin-top: 20px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  background-color: #1976d2;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #1565c0;
+}
+
+#wallBtn {
+  background-color: #f57c00;
+}
+
+#wallBtn:hover {
+  background-color: #e64a19;
+}
+
+#solveBtn {
+  background-color: #4caf50;
+}
+
+#solveBtn:hover {
+  background-color: #388e3c;
+}
+
+#clearSolutionBtn {
+  background-color: #ffb300;
+}
+
+#clearSolutionBtn:hover {
+  background-color: #ffa000;
+}
+
+#clearBtn {
+  background-color: #d32f2f;
+}
+
+#clearBtn:hover {
+  background-color: #b71c1c;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(20, 25px);
+  grid-template-rows: repeat(20, 25px);
+  gap: 2px;
+}
+
+.cell {
+  width: 25px;
+  height: 25px;
+  background-color: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.cell.start {
+  background-color: red;
+}
+
+.cell.end {
+  background-color: green;
+}
+
+.cell.wall {
+  background-color: black;
+}
+
+.cell.visited {
+  background-color: #87cefa;
+}
+
+.cell.path {
+  background-color: yellow;
+}
+
+#info {
+  font-weight: bold;
+  margin-top: 10px;
+}
