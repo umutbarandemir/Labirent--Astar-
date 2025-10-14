@@ -1,106 +1,158 @@
+:root {
+  --bg-color: #f5f5f5;
+  --text-color: #111;
+  --cell-color: white;
+  --visited-color: #87cefa;
+  --path-color: #ffeb3b;
+  --border-color: #ccc;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+body.dark {
+  --bg-color: #121212;
+  --text-color: #f5f5f5;
+  --cell-color: #1e1e1e;
+  --visited-color: #3949ab;
+  --path-color: #fbc02d;
+  --border-color: #333;
+  --shadow-color: rgba(255, 255, 255, 0.1);
+}
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 h1 {
-  margin-top: 20px;
+  margin-top: 10px;
+  font-size: 1.8em;
+  letter-spacing: 0.5px;
 }
 
 .controls {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
 }
 
 button {
-  padding: 8px 14px;
+  padding: 10px 16px;
   border: none;
   background-color: #1976d2;
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: background-color 0.25s, transform 0.15s;
 }
 
 button:hover {
   background-color: #1565c0;
+  transform: translateY(-2px);
+}
+
+#startBtn {
+  background-color:#483D8B;
+}
+#startBtn:hover {
+  background-color: #3a2f7a;
+}
+
+#endBtn {
+  background-color: #f57c00;
+}
+#endBtn:hover {
+  background-color: #ef6c00;
 }
 
 #wallBtn {
-  background-color: #f57c00;
+  background-color: #1976d2;
 }
-
 #wallBtn:hover {
-  background-color: #e64a19;
+  background-color: #1565c0;
 }
 
 #solveBtn {
-  background-color: #4caf50;
+  background-color: #43a047;
 }
-
 #solveBtn:hover {
-  background-color: #388e3c;
+  background-color: #2e7d32;
 }
 
 #clearSolutionBtn {
   background-color: #ffb300;
 }
-
 #clearSolutionBtn:hover {
   background-color: #ffa000;
 }
 
 #clearBtn {
-  background-color: #d32f2f;
+  background-color: #e53935;
+}
+#clearBtn:hover {
+  background-color: #c62828;
 }
 
-#clearBtn:hover {
-  background-color: #b71c1c;
+#themeToggleBtn {
+  background-color: #424242;
+}
+body.dark #themeToggleBtn {
+  background-color: #fafafa;
+  color: #222;
 }
 
 #grid {
   display: grid;
-  grid-template-columns: repeat(20, 25px);
-  grid-template-rows: repeat(20, 25px);
+  grid-template-columns: repeat(20, 28px);
+  grid-template-rows: repeat(20, 28px);
   gap: 2px;
+  background-color: var(--border-color);
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px var(--shadow-color);
+  transition: background-color 0.3s;
 }
 
 .cell {
-  width: 25px;
-  height: 25px;
-  background-color: white;
-  border: 1px solid #ccc;
+  width: 28px;
+  height: 28px;
+  background-color: var(--cell-color);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   transition: background-color 0.15s;
+  border-radius: 4px;
 }
 
 .cell.start {
-  background-color: red;
+  background-color: #483D8B;
 }
-
 .cell.end {
-  background-color: green;
+  background-color: #f57c00;
 }
-
 .cell.wall {
-  background-color: black;
+  background-color: #000;
 }
-
 .cell.visited {
-  background-color: #87cefa;
+  background-color: var(--visited-color);
 }
-
 .cell.path {
-  background-color: yellow;
+  background-color: var(--path-color);
 }
 
 #info {
   font-weight: bold;
   margin-top: 10px;
 }
+
+

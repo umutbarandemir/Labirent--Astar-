@@ -1,12 +1,12 @@
-// elementler
-const gridEl = document.getElementById('grid');
-const startBtn = document.getElementById('startBtn');
-const endBtn = document.getElementById('endBtn');
-const wallBtn = document.getElementById('wallBtn');
-const solveBtn = document.getElementById('solveBtn');
-const clearSolutionBtn = document.getElementById('clearSolutionBtn');
-const clearBtn = document.getElementById('clearBtn');
-const infoEl = document.getElementById('info');
+const gridEl = document.getElementById("grid");
+const startBtn = document.getElementById("startBtn");
+const endBtn = document.getElementById("endBtn");
+const wallBtn = document.getElementById("wallBtn");
+const solveBtn = document.getElementById("solveBtn");
+const clearSolutionBtn = document.getElementById("clearSolutionBtn");
+const clearBtn = document.getElementById("clearBtn");
+const infoEl = document.getElementById("info");
+const themeToggleBtn = document.getElementById("themeToggleBtn");
 
 const ROWS = 20, COLS = 20;
 
@@ -17,36 +17,50 @@ let currentMode = null;
 let pathFound = false;
 let interval = null;
 
+let isMouseDown = false; // for wall drawing
+
 // grid oluştur
 for (let r = 0; r < ROWS; r++) {
   grid[r] = [];
   for (let c = 0; c < COLS; c++) {
-    const cell = document.createElement('div');
-    cell.className = 'cell';
+    const cell = document.createElement("div");
+    cell.className = "cell";
     cell.dataset.row = r;
     cell.dataset.col = c;
-    cell.addEventListener('click', () => handleCellClick(r, c));
+
+    // mouse events
+    cell.addEventListener("mousedown", () => {
+      isMouseDown = true;
+      handleCellClick(r, c);
+    });
+    cell.addEventListener("mouseenter", () => {
+      if (isMouseDown && currentMode === "wall") handleCellClick(r, c);
+    });
+    cell.addEventListener("mouseup", () => (isMouseDown = false));
+
     gridEl.appendChild(cell);
     grid[r][c] = { row: r, col: c, wall: false, cell };
   }
 }
 
+document.body.addEventListener("mouseup", () => (isMouseDown = false));
+
 // mod seçimi
 function setMode(mode) {
   currentMode = mode;
-  [startBtn, endBtn, wallBtn].forEach(b =>
-    b.classList.toggle('active', b.id === mode + 'Btn')
+  [startBtn, endBtn, wallBtn].forEach((b) =>
+    b.classList.toggle("active", b.id === mode + "Btn")
   );
 }
 
-startBtn.onclick = () => setMode('start');
-endBtn.onclick = () => setMode('end');
-wallBtn.onclick = () => setMode('wall');
+startBtn.onclick = () => setMode("start");
+endBtn.onclick = () => setMode("end");
+wallBtn.onclick = () => setMode("wall");
 
 solveBtn.onclick = () => {
   clearSolution();
   if (!startNode || !endNode) {
-    alert('Lütfen başlangıç ve bitiş noktalarını seçin!');
+    alert("Lütfen başlangıç ve bitiş noktalarını seçin!");
     return;
   }
   animateAStar(startNode, endNode);
@@ -55,34 +69,40 @@ solveBtn.onclick = () => {
 clearSolutionBtn.onclick = clearSolution;
 clearBtn.onclick = clearAll;
 
+themeToggleBtn.onclick = () => {
+  document.body.classList.toggle("dark");
+  themeToggleBtn.textContent = document.body.classList.contains("dark")
+    ? "☀️ Gündüz Modu"
+    : "🌙 Gece Modu";
+};
+
 function handleCellClick(r, c) {
   const node = grid[r][c];
-
   if (!currentMode) return;
 
-  if (currentMode === 'start') {
-    if (node === endNode) return alert('Başlangıç ve bitiş aynı olamaz!');
-    if (startNode) startNode.cell.classList.remove('start');
+  if (currentMode === "start") {
+    if (node === endNode) return alert("Başlangıç ve bitiş aynı olamaz!");
+    if (startNode) startNode.cell.classList.remove("start");
     node.wall = false;
-    node.cell.className = 'cell start';
+    node.cell.className = "cell start";
     startNode = node;
     if (pathFound) clearSolution();
   }
 
-  if (currentMode === 'end') {
-    if (node === startNode) return alert('Bitiş ve başlangıç aynı olamaz!');
-    if (endNode) endNode.cell.classList.remove('end');
+  if (currentMode === "end") {
+    if (node === startNode) return alert("Bitiş ve başlangıç aynı olamaz!");
+    if (endNode) endNode.cell.classList.remove("end");
     node.wall = false;
-    node.cell.className = 'cell end';
+    node.cell.className = "cell end";
     endNode = node;
     if (pathFound) clearSolution();
   }
 
-  if (currentMode === 'wall') {
+  if (currentMode === "wall") {
     if (node === startNode || node === endNode) return;
     node.wall = !node.wall;
-    node.cell.classList.toggle('wall', node.wall);
-    if (pathFound && (node.cell.classList.contains('path') || node.cell.classList.contains('visited')))
+    node.cell.classList.toggle("wall", node.wall);
+    if (pathFound && (node.cell.classList.contains("path") || node.cell.classList.contains("visited")))
       clearSolution();
   }
 }
@@ -91,10 +111,10 @@ function clearSolution() {
   clearInterval(interval);
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      grid[r][c].cell.classList.remove('path', 'visited');
+      grid[r][c].cell.classList.remove("path", "visited");
     }
   }
-  infoEl.textContent = '';
+  infoEl.textContent = "";
   pathFound = false;
 }
 
@@ -103,13 +123,13 @@ function clearAll() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       grid[r][c].wall = false;
-      grid[r][c].cell.className = 'cell';
+      grid[r][c].cell.className = "cell";
     }
   }
   startNode = null;
   endNode = null;
   currentMode = null;
-  infoEl.textContent = '';
+  infoEl.textContent = "";
   pathFound = false;
 }
 
@@ -139,11 +159,10 @@ function animateAStar(start, end) {
 
   const visitedCount = { count: 0 };
 
-  // A*'ı bir seferde değil, adım adım interval içinde çalıştıracağız
   interval = setInterval(() => {
     if (openSet.length === 0) {
       clearInterval(interval);
-      infoEl.textContent = '❌ Yol bulunamadı';
+      infoEl.textContent = "❌ Yol bulunamadı";
       pathFound = false;
       return;
     }
@@ -158,9 +177,8 @@ function animateAStar(start, end) {
     visited.push(current);
     visitedCount.count++;
 
-    if (current !== start && current !== end) current.cell.classList.add('visited');
+    if (current !== start && current !== end) current.cell.classList.add("visited");
 
-    // Eğer hedefe ulaşıldıysa, path'i reconstruct et ve animasyonla çiz
     if (current === end) {
       clearInterval(interval);
       const path = [];
@@ -196,7 +214,7 @@ function animateAStar(start, end) {
         if (!openSet.includes(neighbor)) openSet.push(neighbor);
       }
     }
-  }, 30); // her adım 30ms'de bir çalışır
+  }, 30);
 }
 
 function drawPathAnimated(path, visitedCount) {
@@ -209,7 +227,7 @@ function drawPathAnimated(path, visitedCount) {
       return;
     }
     const n = path[i];
-    if (n !== startNode && n !== endNode) n.cell.classList.add('path');
+    if (n !== startNode && n !== endNode) n.cell.classList.add("path");
     i++;
   }, 40);
 }
