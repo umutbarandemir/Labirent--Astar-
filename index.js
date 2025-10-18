@@ -13,6 +13,8 @@ const rowSize = document.getElementById("rowsInput");
 const colSize = document.getElementById("colsInput");
 const resizeGridBtn = document.getElementById("resizeGridBtn");
 
+const altBtn = document.getElementById("altBtn");
+
 let ROWS = 20;
 let COLS = 20;
 
@@ -24,6 +26,11 @@ let pathFound = false;
 let interval = null;
 let isMouseDown = false;
 let speedMultiplier = 1;
+
+// Alternative paths variables
+let allOptimalPaths = [];
+let currentPathIndex = 0;
+let visitedNodes = [];
 
 // Speed control
 speedSlider.addEventListener("input", () => {
@@ -92,6 +99,14 @@ solveBtn.onclick = () => {
 clearSolutionBtn.onclick = clearSolution;
 clearBtn.onclick = clearAll;
 
+// Alternative path button
+altBtn.onclick = () => {
+  if (allOptimalPaths.length > 0) {
+    currentPathIndex = (currentPathIndex + 1) % allOptimalPaths.length;
+    showPath(currentPathIndex);
+  }
+};
+
 // Theme toggle
 themeToggleBtn.onclick = () => {
   document.body.classList.toggle("dark");
@@ -119,6 +134,7 @@ resizeGridBtn.onclick = () => {
   pathFound = false;
   infoEl.textContent = "";
   createGrid(ROWS, COLS);
+  resetAlternativePaths();
 };
 
 // --- Cell Interaction ---
@@ -133,6 +149,7 @@ function handleCellClick(r, c) {
     node.cell.className = "cell start";
     startNode = node;
     if (pathFound) clearSolution();
+    resetAlternativePaths();
   }
 
   if (currentMode === "end") {
@@ -142,6 +159,7 @@ function handleCellClick(r, c) {
     node.cell.className = "cell end";
     endNode = node;
     if (pathFound) clearSolution();
+    resetAlternativePaths();
   }
 
   if (currentMode === "wall") {
@@ -153,6 +171,7 @@ function handleCellClick(r, c) {
       (node.cell.classList.contains("path") || node.cell.classList.contains("visited"))
     )
       clearSolution();
+    resetAlternativePaths();
   }
 }
 
@@ -166,6 +185,7 @@ function clearSolution() {
   }
   infoEl.textContent = "";
   pathFound = false;
+  resetAlternativePaths();
 }
 
 function clearAll() {
@@ -181,6 +201,44 @@ function clearAll() {
   currentMode = null;
   infoEl.textContent = "";
   pathFound = false;
+  resetAlternativePaths();
+}
+
+// --- Alternative Path Functions ---
+function resetAlternativePaths() {
+  allOptimalPaths = [];
+  currentPathIndex = 0;
+  visitedNodes = [];
+  altBtn.disabled = true;
+}
+
+function enableAlternativePathsButton() {
+  if (allOptimalPaths.length > 1) {
+    altBtn.disabled = false;
+  } else {
+    altBtn.disabled = true;
+  }
+}
+
+function showPath(index) {
+  // Clear previous path
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c].cell.classList.contains("path")) {
+        grid[r][c].cell.classList.remove("path");
+      }
+    }
+  }
+  
+  // Show new path
+  const path = allOptimalPaths[index];
+  for (const node of path) {
+    if (node !== startNode && node !== endNode) {
+      node.cell.classList.add("path");
+    }
+  }
+  
+  infoEl.textContent = `✅ İncelenen düğüm: ${visitedNodes.length}, Yol uzunluğu: ${path.length} (Yol ${index + 1}/${allOptimalPaths.length})`;
 }
 
 // --- Heuristic (Manhattan) ---
@@ -188,27 +246,31 @@ function heuristic(a, b) {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
 
-// --- A* Animation ---
+// --- Animated A* Algorithm ---
 function animateAStar(start, end) {
+  resetAlternativePaths();
+  
   const openSet = [start];
   const cameFrom = new Map();
   const gScore = new Map();
   const fScore = new Map();
-  const visited = [];
+  const closedSet = new Set();
+  let visitedCount = 0;
 
+  // Initialize scores
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      const n = grid[r][c];
-      gScore.set(n, Infinity);
-      fScore.set(n, Infinity);
+      const node = grid[r][c];
+      gScore.set(node, Infinity);
+      fScore.set(node, Infinity);
     }
   }
 
   gScore.set(start, 0);
   fScore.set(start, heuristic(start, end));
 
-  const visitedCount = { count: 0 };
-
+  let animationStep = 0;
+  
   interval = setInterval(() => {
     if (openSet.length === 0) {
       clearInterval(interval);
@@ -217,69 +279,183 @@ function animateAStar(start, end) {
       return;
     }
 
-    // En düşük fScore'u bul
+    // Find node with lowest fScore
     let currentIdx = 0;
     for (let i = 1; i < openSet.length; i++) {
-      if (fScore.get(openSet[i]) < fScore.get(openSet[currentIdx]))
+      if (fScore.get(openSet[i]) < fScore.get(openSet[currentIdx])) {
         currentIdx = i;
+      }
     }
 
     const current = openSet.splice(currentIdx, 1)[0];
-    visited.push(current);
-    visitedCount.count++;
+    closedSet.add(current);
+    visitedCount++;
 
-    if (current !== start && current !== end)
+    // Animate visited node
+    if (current !== start && current !== end) {
       current.cell.classList.add("visited");
+    }
 
     if (current === end) {
       clearInterval(interval);
-      const path = [];
-      let cur = current;
-      while (cameFrom.has(cur)) {
-        path.push(cur);
-        cur = cameFrom.get(cur);
-      }
-      path.reverse();
-      drawPathAnimated(path, visitedCount.count);
+      const path = reconstructPath(cameFrom, current);
+      visitedNodes = Array.from(closedSet);
+      allOptimalPaths.push(path);
+      
+      // Find alternative paths after animation completes
+      setTimeout(() => {
+        findAlternativePaths(start, end, path.length);
+        showPath(0);
+        pathFound = true;
+        enableAlternativePathsButton();
+      }, 100);
       return;
     }
 
-    const dirs = [
-      [1, 0],
-      [-1, 0],
-      [0, 1],
-      [0, -1],
-    ];
-
+    // Explore neighbors
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     for (const [dr, dc] of dirs) {
       const nr = current.row + dr;
       const nc = current.col + dc;
+      
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      
       const neighbor = grid[nr][nc];
-      if (neighbor.wall) continue;
+      if (neighbor.wall || closedSet.has(neighbor)) continue;
 
       const tentativeG = gScore.get(current) + 1;
+      
       if (tentativeG < gScore.get(neighbor)) {
         cameFrom.set(neighbor, current);
         gScore.set(neighbor, tentativeG);
         fScore.set(neighbor, tentativeG + heuristic(neighbor, end));
-        if (!openSet.includes(neighbor)) openSet.push(neighbor);
+        
+        if (!openSet.includes(neighbor)) {
+          openSet.push(neighbor);
+        }
       }
     }
-  }, 30 / speedMultiplier);
+    
+    animationStep++;
+  }, 100 / speedMultiplier); // Speed multiplier applied here
 }
 
-function drawPathAnimated(path, visitedCount) {
-  let i = 0;
-  pathFound = true;
-  const pathInterval = setInterval(() => {
-    if (i >= path.length) {
-      clearInterval(pathInterval);
-      infoEl.textContent = `✅ İncelenen düğüm: ${visitedCount}, Yol uzunluğu: ${path.length}`;
-      return;
+function reconstructPath(cameFrom, current) {
+  const path = [];
+  while (cameFrom.has(current)) {
+    path.push(current);
+    current = cameFrom.get(current);
+  }
+  path.push(current);
+  return path.reverse();
+}
+
+function findAlternativePaths(start, end, targetLength) {
+  const originalPath = allOptimalPaths[0];
+  
+  // Try to find alternative paths by excluding one node from the original path at a time
+  for (let i = 1; i < originalPath.length - 1; i++) {
+    const nodeToBlock = originalPath[i];
+    
+    // Temporarily block this node
+    const wasWall = nodeToBlock.wall;
+    nodeToBlock.wall = true;
+    
+    // Run A* with this node blocked (non-animated for performance)
+    const result = runQuickAStar(start, end);
+    
+    // Restore the node
+    nodeToBlock.wall = wasWall;
+    
+    if (result.found && result.path.length === targetLength) {
+      // Check if this is a new path
+      if (!isDuplicatePath(result.path)) {
+        allOptimalPaths.push(result.path);
+        
+        // Limit to reasonable number of alternative paths, decides how many optimal paths to store
+        if (allOptimalPaths.length >= 20) break;
+      }
     }
-    const n = path[i];
-    if (n !== startNode && n !== endNode) n.cell.classList.add("path");
-    i++;
-  }, 40 / speedMultiplier);
+  }
+}
+
+function runQuickAStar(start, end) {
+  const openSet = [start];
+  const cameFrom = new Map();
+  const gScore = new Map();
+  const fScore = new Map();
+  const closedSet = new Set();
+
+  // Initialize scores
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const node = grid[r][c];
+      gScore.set(node, Infinity);
+      fScore.set(node, Infinity);
+    }
+  }
+
+  gScore.set(start, 0);
+  fScore.set(start, heuristic(start, end));
+
+  while (openSet.length > 0) {
+    // Find node with lowest fScore
+    let currentIdx = 0;
+    for (let i = 1; i < openSet.length; i++) {
+      if (fScore.get(openSet[i]) < fScore.get(openSet[currentIdx])) {
+        currentIdx = i;
+      }
+    }
+
+    const current = openSet.splice(currentIdx, 1)[0];
+    closedSet.add(current);
+
+    if (current === end) {
+      const path = reconstructPath(cameFrom, current);
+      return { found: true, path: path, length: path.length };
+    }
+
+    // Explore neighbors
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (const [dr, dc] of dirs) {
+      const nr = current.row + dr;
+      const nc = current.col + dc;
+      
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      
+      const neighbor = grid[nr][nc];
+      if (neighbor.wall || closedSet.has(neighbor)) continue;
+
+      const tentativeG = gScore.get(current) + 1;
+      
+      if (tentativeG < gScore.get(neighbor)) {
+        cameFrom.set(neighbor, current);
+        gScore.set(neighbor, tentativeG);
+        fScore.set(neighbor, tentativeG + heuristic(neighbor, end));
+        
+        if (!openSet.includes(neighbor)) {
+          openSet.push(neighbor);
+        }
+      }
+    }
+  }
+
+  return { found: false, path: [], length: Infinity };
+}
+
+function isDuplicatePath(newPath) {
+  for (const existingPath of allOptimalPaths) {
+    if (existingPath.length !== newPath.length) continue;
+    
+    let isSame = true;
+    for (let i = 0; i < newPath.length; i++) {
+      if (newPath[i] !== existingPath[i]) {
+        isSame = false;
+        break;
+      }
+    }
+    
+    if (isSame) return true;
+  }
+  return false;
 }
