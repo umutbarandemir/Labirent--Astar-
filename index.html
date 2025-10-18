@@ -18,13 +18,17 @@
     <button id="clearBtn">Temizle</button>
     <button id="nextPathBtn" disabled>🔄 Alternatif Yol</button>
     <button id="themeToggleBtn">🌙 Gece Modu</button>
-
+  </div>
     <div class="speed-control">
       <label for="speedSlider">Hız: <span id="speedValue">1x</span></label>
       <input type="range" id="speedSlider" min="1" max="10" value="1" step="1" />
     </div>
-
-  </div>
+    <div class="gridSize">
+        <label>Labirent Boyutu</label>
+        <input type="number" id="rowsInput" min="5" max="50" value="20" /> X
+        <input type="number" id="colsInput" min="5" max="50" value="20" /> Y
+        <button id="resizeGridBtn">Yeniden Boyutlandır</button>
+    </div>
 
   <div id="info"></div>
   <div id="grid"></div>

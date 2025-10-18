@@ -23,7 +23,7 @@ body.dark {
   --panel-color: rgba(30, 41, 59, 0.8);
   --text-color: #e2e8f0;
   --cell-color: rgba(51, 65, 85, 0.8);
-  --visited-color: #475569;
+  --visited-color: #1d7441;
   --path-color: #facc15;
   --wall-color: #000;
   --border-color: rgba(255, 255, 255, 0.1);
@@ -131,8 +131,9 @@ body.dark #themeToggleBtn {
 .cell.end {
   background: linear-gradient(135deg, #f97316, #ea580c);
 }
+/* !important Ensures wall color overrides others */
 .cell.wall {
-  background-color: var(--wall-color);
+  background-color: var(--wall-color) !important; 
 }
 .cell.visited {
   background-color: var(--visited-color);
@@ -171,6 +172,27 @@ body.dark #themeToggleBtn {
   width: 120px;
   cursor: pointer;
   accent-color: var(--primary-color);
+}
+.gridSize{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  background: var(--panel-color);
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  backdrop-filter: var(--blur-bg);
+}
+.gridSize input[type="number"] {
+  width: 50px;
+  padding: 4px 8px;
+  border: 3px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--cell-color);
+  color: var(--text-color);
+  font-weight: 500;
+  transition: var(--transition);
 }
 
 /* Info Message */

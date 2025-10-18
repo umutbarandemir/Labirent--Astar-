@@ -9,8 +9,12 @@ const infoEl = document.getElementById("info");
 const themeToggleBtn = document.getElementById("themeToggleBtn");
 const speedSlider = document.getElementById("speedSlider");
 const speedValue = document.getElementById("speedValue");
+const rowSize = document.getElementById("rowsInput");
+const colSize = document.getElementById("colsInput");
+const resizeGridBtn = document.getElementById("resizeGridBtn");
 
-const ROWS = 20, COLS = 20;
+let ROWS = 20;
+let COLS = 20;
 
 let grid = [];
 let startNode = null;
@@ -18,43 +22,52 @@ let endNode = null;
 let currentMode = null;
 let pathFound = false;
 let interval = null;
+let isMouseDown = false;
+let speedMultiplier = 1;
 
-let isMouseDown = false; // for wall drawing
-
-let speedMultiplier = 1; // default speed
-
+// Speed control
 speedSlider.addEventListener("input", () => {
   speedMultiplier = parseInt(speedSlider.value);
   speedValue.textContent = `${speedMultiplier}x`;
 });
 
-// grid oluştur
-for (let r = 0; r < ROWS; r++) {
-  grid[r] = [];
-  for (let c = 0; c < COLS; c++) {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.dataset.row = r;
-    cell.dataset.col = c;
+// --- Grid Creation ---
+function createGrid(rows = 20, cols = 20) {
+  gridEl.innerHTML = "";
+  grid = [];
 
-    // mouse events
-    cell.addEventListener("mousedown", () => {
-      isMouseDown = true;
-      handleCellClick(r, c);
-    });
-    cell.addEventListener("mouseenter", () => {
-      if (isMouseDown && currentMode === "wall") handleCellClick(r, c);
-    });
-    cell.addEventListener("mouseup", () => (isMouseDown = false));
+  // Update CSS grid (no inline size styling)
+  gridEl.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
-    gridEl.appendChild(cell);
-    grid[r][c] = { row: r, col: c, wall: false, cell };
+  for (let r = 0; r < rows; r++) {
+    grid[r] = [];
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+
+      cell.addEventListener("mousedown", () => {
+        isMouseDown = true;
+        handleCellClick(r, c);
+      });
+      cell.addEventListener("mouseenter", () => {
+        if (isMouseDown && currentMode === "wall") handleCellClick(r, c);
+      });
+      cell.addEventListener("mouseup", () => (isMouseDown = false));
+
+      gridEl.appendChild(cell);
+      grid[r][c] = { row: r, col: c, wall: false, cell };
+    }
   }
+
+  document.body.addEventListener("mouseup", () => (isMouseDown = false));
 }
 
-document.body.addEventListener("mouseup", () => (isMouseDown = false));
+createGrid(ROWS, COLS); // default 20x20 grid
 
-// mod seçimi
+// --- Mode Selection ---
 function setMode(mode) {
   currentMode = mode;
   [startBtn, endBtn, wallBtn].forEach((b) =>
@@ -66,6 +79,7 @@ startBtn.onclick = () => setMode("start");
 endBtn.onclick = () => setMode("end");
 wallBtn.onclick = () => setMode("wall");
 
+// --- Button Actions ---
 solveBtn.onclick = () => {
   clearSolution();
   if (!startNode || !endNode) {
@@ -78,6 +92,7 @@ solveBtn.onclick = () => {
 clearSolutionBtn.onclick = clearSolution;
 clearBtn.onclick = clearAll;
 
+// Theme toggle
 themeToggleBtn.onclick = () => {
   document.body.classList.toggle("dark");
   themeToggleBtn.textContent = document.body.classList.contains("dark")
@@ -85,6 +100,28 @@ themeToggleBtn.onclick = () => {
     : "🌙 Gece Modu";
 };
 
+// --- Resize Grid ---
+resizeGridBtn.onclick = () => {
+  const newRows = parseInt(rowSize.value);
+  const newCols = parseInt(colSize.value);
+
+  if (isNaN(newRows) || isNaN(newCols) || newRows < 5 || newCols < 5) {
+    alert("Geçerli bir boyut girin (5-50 arası)!");
+    return;
+  }
+
+  ROWS = newRows;
+  COLS = newCols;
+
+  clearInterval(interval);
+  startNode = null;
+  endNode = null;
+  pathFound = false;
+  infoEl.textContent = "";
+  createGrid(ROWS, COLS);
+};
+
+// --- Cell Interaction ---
 function handleCellClick(r, c) {
   const node = grid[r][c];
   if (!currentMode) return;
@@ -111,11 +148,15 @@ function handleCellClick(r, c) {
     if (node === startNode || node === endNode) return;
     node.wall = !node.wall;
     node.cell.classList.toggle("wall", node.wall);
-    if (pathFound && (node.cell.classList.contains("path") || node.cell.classList.contains("visited")))
+    if (
+      pathFound &&
+      (node.cell.classList.contains("path") || node.cell.classList.contains("visited"))
+    )
       clearSolution();
   }
 }
 
+// --- Clear Functions ---
 function clearSolution() {
   clearInterval(interval);
   for (let r = 0; r < ROWS; r++) {
@@ -142,12 +183,12 @@ function clearAll() {
   pathFound = false;
 }
 
-// Heuristic (Manhattan)
+// --- Heuristic (Manhattan) ---
 function heuristic(a, b) {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
 
-// --- A* algoritmasının animasyonlu hali ---
+// --- A* Animation ---
 function animateAStar(start, end) {
   const openSet = [start];
   const cameFrom = new Map();
@@ -179,14 +220,16 @@ function animateAStar(start, end) {
     // En düşük fScore'u bul
     let currentIdx = 0;
     for (let i = 1; i < openSet.length; i++) {
-      if (fScore.get(openSet[i]) < fScore.get(openSet[currentIdx])) currentIdx = i;
+      if (fScore.get(openSet[i]) < fScore.get(openSet[currentIdx]))
+        currentIdx = i;
     }
 
     const current = openSet.splice(currentIdx, 1)[0];
     visited.push(current);
     visitedCount.count++;
 
-    if (current !== start && current !== end) current.cell.classList.add("visited");
+    if (current !== start && current !== end)
+      current.cell.classList.add("visited");
 
     if (current === end) {
       clearInterval(interval);
@@ -223,7 +266,7 @@ function animateAStar(start, end) {
         if (!openSet.includes(neighbor)) openSet.push(neighbor);
       }
     }
-  }, 30/speedMultiplier);
+  }, 30 / speedMultiplier);
 }
 
 function drawPathAnimated(path, visitedCount) {
@@ -238,5 +281,5 @@ function drawPathAnimated(path, visitedCount) {
     const n = path[i];
     if (n !== startNode && n !== endNode) n.cell.classList.add("path");
     i++;
-  }, 40/speedMultiplier);
+  }, 40 / speedMultiplier);
 }
