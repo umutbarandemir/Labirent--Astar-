@@ -238,7 +238,7 @@ function showPath(index) {
     }
   }
   
-  infoEl.textContent = `✅ İncelenen düğüm: ${visitedNodes.length}, Yol uzunluğu: ${path.length} (Yol ${index + 1}/${allOptimalPaths.length})`;
+  infoEl.textContent = `✅ İncelenen düğüm: ${visitedNodes.length}, Yol uzunluğu: ${path.length-1} (Yol ${index + 1}/${allOptimalPaths.length})`;
 }
 
 // --- Heuristic (Manhattan) ---
